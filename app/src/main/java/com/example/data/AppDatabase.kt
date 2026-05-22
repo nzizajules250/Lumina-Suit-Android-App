@@ -23,9 +23,49 @@ interface MockupDao {
 
     @Query("DELETE FROM parsed_galleries WHERE id = :id")
     suspend fun deleteGalleryById(id: Int)
+
+    // E-Commerce Cart Items
+    @Query("SELECT * FROM cart_items ORDER BY id ASC")
+    fun getCartItems(): Flow<List<CartItem>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCartItem(item: CartItem)
+
+    @Update
+    suspend fun updateCartItem(item: CartItem)
+
+    @Query("DELETE FROM cart_items WHERE id = :id")
+    suspend fun deleteCartItem(id: Int)
+
+    @Query("DELETE FROM cart_items")
+    suspend fun clearCart()
+
+    // E-Commerce Bespoke Orders
+    @Query("SELECT * FROM bespoke_orders ORDER BY timestamp DESC")
+    fun getAllOrders(): Flow<List<BespokeOrder>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrder(order: BespokeOrder)
+
+    // Wardrobe Fitting Profile (Singleton)
+    @Query("SELECT * FROM wardrobe_profiles WHERE id = 1 LIMIT 1")
+    fun getWardrobeProfile(): Flow<WardrobeProfile?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveWardrobeProfile(profile: WardrobeProfile)
 }
 
-@Database(entities = [MockupGeneration::class, ParsedGallery::class], version = 1, exportSchema = false)
+@Database(
+    entities = [
+        MockupGeneration::class, 
+        ParsedGallery::class, 
+        CartItem::class, 
+        BespokeOrder::class, 
+        WardrobeProfile::class
+    ], 
+    version = 2, 
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun mockupDao(): MockupDao
 
@@ -40,7 +80,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "mockup_studio_db"
                 )
-                .fallbackToDestructiveMigration()
+                .fallbackToDestructiveMigration(true)
                 .build()
                 INSTANCE = instance
                 instance
